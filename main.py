@@ -4,12 +4,11 @@ from datetime import datetime
 from telegram import Bot
 import os
 
-# === 配置 ===
-BSC_SCAN_API_KEY = os.getenv("BSC_SCAN_API_KEY")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+BSC_SCAN_API_KEY = os.getenv("D3IHW56XIXM372PWXEXBGDGC3THM3RN8UM")
+TELEGRAM_BOT_TOKEN = os.getenv("7564511392:AAEBov5HVMW2p_B04-T_a2-Iu2wpyXWdW0E")
+TELEGRAM_CHAT_ID = os.getenv("6998190008")
 WATCHED_ADDRESS = "0x93dEb693b170d56BdDe1B0a5222B14c0F885d976"
-MIN_TOKEN_VALUE = 10000 * (10 ** 18)
+MIN_TOKEN_VALUE = 20000 * (10 ** 18)
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 notified_tx_hashes = set()
@@ -30,8 +29,7 @@ def get_token_transfers():
         if latest_start_timestamp is None and txs:
             latest_start_timestamp = int(txs[0]["timeStamp"])
         return txs
-    except Exception as e:
-        print("❌ 錯誤：", e)
+    except Exception:
         return []
 
 def check_new_transfers():
@@ -58,20 +56,13 @@ def check_new_transfers():
 
             if token_value >= MIN_TOKEN_VALUE:
                 message = (
-                    f"🚨 Binance Alpha Watch\n"
-                    f"🔺 轉入 {readable_value:,.2f} {token_symbol} ({token_name})\n"
-                    f"🕒 時間: {timestamp} UTC\n"
-                    f"🔗 交易連結: https://bscscan.com/tx/{tx_hash}"
+                    f"Detected deposit of {readable_value:,.2f} {token_symbol} to https://bscscan.com/address/{WATCHED_ADDRESS}\n"
+                    f"\n————————————\n{timestamp} UTC"
                 )
                 bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-                print(f"✅ 已通知：轉入 {readable_value} {token_symbol}")
-            else:
-                print(f"⚠️ 數量太小：{readable_value} {token_symbol}（轉入）")
-
             notified_tx_hashes.add(tx["hash"])
 
 if __name__ == "__main__":
-    print("📡 開始監控 Binance Alpha 錢包...")
     while True:
         check_new_transfers()
         time.sleep(60)
