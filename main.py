@@ -42,14 +42,21 @@ def get_transactions():
 
 def format_tx(tx):
     symbol = tx.get("tokenSymbol", "")
+    # 轉成浮點數，並保留4位小數
     value = int(tx.get("value", 0)) / (10 ** int(tx.get("tokenDecimal", 18)))
     tx_hash = tx.get("hash")
     time_stamp = datetime.fromtimestamp(int(tx.get("timeStamp")), tz)
     formatted_time = time_stamp.strftime('%Y-%m-%d %H:%M:%S')
-    return (
-        f"{symbol} received / Amount: {value:,.4f} / https://bscscan.com/tx/{tx_hash}\n"
+
+    # 用Markdown的粗體格式包住symbol，且將千分位用逗號分隔
+    message = (
+        f"*{symbol}* received\n"
+        f"Amount: {value:,.4f}\n"
+        f"https://bscscan.com/tx/{tx_hash}\n"
+        f"---------------------------------\n"
         f"{formatted_time} (UTC+8)"
     )
+    return message
 
 async def check_new_transaction():
     global last_tx_time
@@ -79,4 +86,5 @@ threading.Thread(target=run_bot_loop).start()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
