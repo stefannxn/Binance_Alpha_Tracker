@@ -6,28 +6,26 @@ from telegram import Bot
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
+import asyncio
+import threading
 
-# Load environment variables
 load_dotenv()
 
 BSC_SCAN_API_KEY = os.getenv("BSC_SCAN_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Flask app to keep Railway container alive
 app = Flask(__name__)
 
 @app.route("/")
 def index():
     return "Bot is running."
 
-# Telegram bot application
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 last_tx_time = None
 
-# Set timezone to Taiwan
 tz = pytz.timezone("Asia/Taipei")
 
 def get_transactions():
@@ -45,11 +43,13 @@ def get_transactions():
 def format_tx(tx):
     symbol = tx.get("tokenSymbol", "")
     value = int(tx.get("value", 0)) / (10 ** int(tx.get("tokenDecimal", 18)))
-    from_addr = tx.get("from")
-    to_addr = tx.get("to")
     tx_hash = tx.get("hash")
     time_stamp = datetime.fromtimestamp(int(tx.get("timeStamp")), tz)
-    return f"📥 *{symbol}* received\n💰 Amount: {value:,.4f}\n🕒 Time: {time_stamp.strftime('%Y-%m-%d %H:%M:%S')}\n🔗 [Tx Link](https://bscscan.com/tx/{tx_hash})"
+    formatted_time = time_stamp.strftime('%Y-%m-%d %H:%M:%S')
+    return (
+        f"{symbol} received / Amount: {value:,.4f} / https://bscscan.com/tx/{tx_hash}\n"
+        f"{formatted_time} (UTC+8)"
+    )
 
 async def check_new_transaction():
     global last_tx_time
@@ -68,10 +68,6 @@ async def check_new_transaction():
                 print(f"Telegram error: {e}")
             break
 
-# Loop in a background thread
-import asyncio
-import threading
-
 def run_bot_loop():
     async def loop():
         while True:
@@ -81,7 +77,6 @@ def run_bot_loop():
 
 threading.Thread(target=run_bot_loop).start()
 
-# Run Flask server for Railway
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 
