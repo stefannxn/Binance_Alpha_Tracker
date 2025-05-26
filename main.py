@@ -1,7 +1,7 @@
 import requests
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from telegram import Bot
 from flask import Flask
 from threading import Thread
@@ -41,7 +41,8 @@ def get_token_transfers():
 # 檢查有沒有新轉帳
 def check_new_transfers():
     global notified_tx_hashes, latest_start_timestamp
-    print(f"[{datetime.utcnow()}] Checking for new transfers...")
+    now_tw = datetime.utcnow() + timedelta(hours=8)
+    print(f"[{now_tw.strftime('%Y-%m-%d %H:%M:%S')}] 正在檢查轉帳紀錄...")
 
     transfers = get_token_transfers()
     for tx in transfers:
@@ -59,21 +60,22 @@ def check_new_transfers():
             token_value = int(tx["value"])
             token_decimals = int(tx["tokenDecimal"])
             readable_value = token_value / (10 ** token_decimals)
-            timestamp = datetime.utcfromtimestamp(tx_time).strftime('%Y-%m-%d %H:%M:%S')
+            # 台灣時間
+            timestamp = (datetime.utcfromtimestamp(tx_time) + timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')
 
-            print(f"Detected {readable_value:.2f} {token_symbol} at {timestamp} UTC")
+            print(f"偵測到 {readable_value:.2f} {token_symbol}，時間：{timestamp}（台灣時間）")
 
             if token_value >= MIN_TOKEN_VALUE:
                 message = (
                     f"🚨 大額入帳：{readable_value:,.2f} {token_symbol}\n"
                     f"📍 地址: https://bscscan.com/address/{WATCHED_ADDRESS}\n"
-                    f"🕒 時間: {timestamp} UTC"
+                    f"🕒 時間: {timestamp}（台灣時間）"
                 )
                 try:
                     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-                    print(f"✅ Message sent to Telegram")
+                    print(f"✅ 已發送 Telegram 通知")
                 except Exception as e:
-                    print(f"❌ Failed to send message: {e}")
+                    print(f"❌ 傳送訊息失敗: {e}")
 
             notified_tx_hashes.add(tx["hash"])
             # 更新時間為最新一筆
@@ -98,11 +100,12 @@ def run_bot():
 
 if __name__ == "__main__":
     # 測試環境變數是否讀取成功
-    print("🔧 Starting bot with config:")
+    print("🔧 啟動設定：")
     print(f"BSC_SCAN_API_KEY: {'OK' if BSC_SCAN_API_KEY else 'MISSING'}")
     print(f"TELEGRAM_BOT_TOKEN: {'OK' if TELEGRAM_BOT_TOKEN else 'MISSING'}")
     print(f"TELEGRAM_CHAT_ID: {'OK' if TELEGRAM_CHAT_ID else 'MISSING'}")
-    print(f"Watching address: {WATCHED_ADDRESS}")
+    print(f"監控地址: {WATCHED_ADDRESS}")
 
     Thread(target=run_flask).start()
     Thread(target=run_bot).start()
+
