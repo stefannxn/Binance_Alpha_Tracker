@@ -4,7 +4,6 @@ import requests
 from flask import Flask
 from telegram import Bot
 from telegram.constants import ParseMode
-from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 from datetime import datetime
 import pytz
@@ -28,9 +27,10 @@ last_tx_time = None
 
 tz = pytz.timezone("Asia/Taipei")
 MIN_TOKENS = 10_000
+WATCHED_ADDRESS = "0x93dEb693b170d56BdDe1B0a5222B14c0F885d976"
 
 def get_transactions():
-    url = f"https://api.bscscan.com/api?module=account&action=tokentx&address=0x93dEb693b170d56BdDe1B0a5222B14c0F885d976&sort=desc&apikey={BSC_SCAN_API_KEY}"
+    url = f"https://api.bscscan.com/api?module=account&action=tokentx&address={WATCHED_ADDRESS}&sort=desc&apikey={BSC_SCAN_API_KEY}"
     try:
         response = requests.get(url)
         data = response.json()
@@ -52,7 +52,8 @@ def format_tx(tx):
     message = (
         f"*{symbol}* received\n"
         f"Amount: {value:,.4f}\n"
-        f"Token Contract: [`{contract}`](https://bscscan.com/token/{contract})\n"
+        f"Token Contract: [`{contract[:6]}...`](https://bscscan.com/token/{contract})\n"
+        f"Address: [`{WATCHED_ADDRESS[:6]}...{WATCHED_ADDRESS[-4:]}`](https://bscscan.com/address/{WATCHED_ADDRESS})\n"
         f"https://bscscan.com/tx/{tx_hash}\n"
         f"{formatted_time} (UTC+8)"
     )
@@ -63,7 +64,7 @@ async def check_new_transaction():
     txs = get_transactions()
     for tx in txs:
         to_addr = tx.get("to", "").lower()
-        if to_addr != "0x93deb693b170d56bdde1b0a5222b14c0f885d976":
+        if to_addr != WATCHED_ADDRESS.lower():
             continue
         tx_time = int(tx.get("timeStamp", 0))
         if last_tx_time is None or tx_time > last_tx_time:
@@ -94,9 +95,6 @@ def run_bot_loop():
     asyncio.run(loop())
 
 threading.Thread(target=run_bot_loop).start()
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
