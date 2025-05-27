@@ -45,15 +45,12 @@ def format_tx(tx):
     symbol = tx.get("tokenSymbol", "")
     value = int(tx.get("value", 0)) / (10 ** int(tx.get("tokenDecimal", 18)))
     tx_hash = tx.get("hash")
-    contract = tx.get("contractAddress", "")
     time_stamp = datetime.fromtimestamp(int(tx.get("timeStamp")), tz)
     formatted_time = time_stamp.strftime('%Y-%m-%d %H:%M:%S')
 
     message = (
         f"*{symbol}* received\n"
         f"Amount: {value:,.4f}\n"
-        f"Token Contract: [`{contract[:6]}...`](https://bscscan.com/token/{contract})\n"
-        f"Address: [`{WATCHED_ADDRESS[:6]}...{WATCHED_ADDRESS[-4:]}`](https://bscscan.com/address/{WATCHED_ADDRESS})\n"
         f"https://bscscan.com/tx/{tx_hash}\n"
         f"{formatted_time} (UTC+8)"
     )
@@ -95,6 +92,10 @@ def run_bot_loop():
     asyncio.run(loop())
 
 threading.Thread(target=run_bot_loop).start()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
