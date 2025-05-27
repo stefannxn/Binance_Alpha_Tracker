@@ -26,7 +26,7 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 last_tx_time = None
 
 tz = pytz.timezone("Asia/Taipei")
-MIN_TOKENS = 100
+MIN_TOKENS = 100_000
 WATCHED_ADDRESS = "0x93dEb693b170d56BdDe1B0a5222B14c0F885d976"
 
 def get_transactions():
