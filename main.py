@@ -56,7 +56,7 @@ def format_tx(tx):
     formatted_time = time_stamp.strftime('%Y-%m-%d %H:%M:%S')
     return (
         f"*{symbol}* received\n"
-        f"Amount: {value:,.4f}\n"
+        f"Amount: {value:,.0f}\n"
         f"https://bscscan.com/tx/{tx_hash}\n"
         f"{formatted_time} (UTC+8)"
     )
@@ -104,10 +104,3 @@ threading.Thread(target=run_bot_loop).start()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-
-
-threading.Thread(target=run_bot_loop).start()
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-
